@@ -1,0 +1,190 @@
+#include <iostream>
+#include "SignatureTestUtils.h"
+//using namespace std;
+
+//Zilliqa Schnorr
+#include "/home/peng/workspace_openssl/signature_test/src/libCrypto/MultiSig.h"
+
+//openssl ECDSA
+#include <string.h>
+#include <openssl/ec.h>      // for EC_GROUP_new_by_curve_name, EC_GROUP_free, EC_KEY_new, EC_KEY_set_group, EC_KEY_generate_key, EC_KEY_free
+#include <openssl/ecdsa.h>   // for ECDSA_do_sign, ECDSA_do_verify
+#include <openssl/obj_mac.h> // for NID_secp192k1
+#include <openssl/evp.h>
+#include <openssl/sha.h>
+
+//Nano EdDSA
+#include <openssl/rand.h>
+#include "/home/peng/workspace_openssl/ed25519-donna/ed25519.h"
+
+
+#define NUM_NODES 				32
+#define NUM_ROUNDS				1000
+#define MULTI_SIG_MSG_SIZE		512
+#define MAX_DIGEST_LEN			32
+
+namespace CryptoPerfTest
+{
+//int string_sizes[] = {128, 256, 512, 1024, 1024*2, 1024*4, 1024*8, 1024*16, 1024*32, 1024*64, 1024*128, 1024*256, 1024*512, 1024*1024};
+int string_sizes[] = {512};
+
+void handleErrors(const char * s)
+{
+	cout << s << " error" << endl;
+	exit(-1);
+}
+
+class EdDSA_Test
+{
+public:
+	ed25519_secret_key sk;
+	ed25519_public_key pk;
+
+	vector<string> messages;
+	int rounds;
+
+	EdDSA_Test(int rounds)
+	: sk()
+	, messages()
+	, rounds(rounds)
+	{
+	    if(1 != RAND_bytes(sk, sizeof(ed25519_secret_key)))
+	    	handleErrors("RAND_bytes");
+
+	    ed25519_publickey(sk, pk);
+	}
+
+	clock_t sign(int size)
+	{
+		SignatureTestUtils::getStrings(size, rounds, messages);
+
+		clock_t t_start = clock();
+		for(auto &msg : messages)
+		{
+			ed25519_signature sig;
+			ed25519_sign((unsigned char *)msg.data(), msg.size(), sk, pk, sig);
+		}
+		return clock() - t_start;
+	}
+
+	clock_t verify(int size)
+	{
+		SignatureTestUtils::getStrings(size, rounds, messages);
+		vector<ed25519_signature> sigs(rounds);
+
+		for(int i = 0;i < rounds; ++i)
+		{
+			auto &msg = messages[i];
+			ed25519_sign((unsigned char *)msg.data(), msg.size(), sk, pk, sigs[i]);
+		}
+
+		clock_t t_start = clock();
+		for(int i = 0;i < rounds; ++i)
+		{
+			auto &msg = messages[i];
+			auto &sig = sigs[i];
+			ed25519_sign_open((unsigned char *)msg.data(), msg.size(), pk, sig);
+		}
+		return clock() - t_start;
+	}
+};
+}
+
+
+//class ECDSA_Test
+//{
+//public:
+//	EC_KEY *eckey;
+//
+//	vector<string> messages;
+//	int rounds;
+//
+//	ECDSA_Test(int rounds)
+//	: eckey(EC_KEY_new())
+//	, messages()
+//	, rounds(rounds)
+//	{
+//		if (NULL == eckey)
+//			handleErrors("Failed to create new EC Key");
+//
+//		EC_GROUP *ecgroup= EC_GROUP_new_by_curve_name(NID_secp256k1);
+//		if (NULL == ecgroup)
+//			handleErrors("EC_GROUP_new_by_curve_name error");
+//
+//		if(1 != EC_KEY_set_group(eckey,ecgroup))
+//			handleErrors("EC_KEY_set_group error");
+//
+//		if(1 != EC_KEY_generate_key(eckey))
+//			handleErrors("EC_KEY_generate_key error");
+//	}
+//
+//	ECDSA_SIG * sign(string & msg)
+//	{
+//		unsigned char digest[MAX_DIGEST_LEN];
+//		SHA256((unsigned char *)msg.data(), msg.size(), digest);
+//		ECDSA_SIG *signature = ECDSA_do_sign(digest, MAX_DIGEST_LEN, eckey);
+//		if (NULL == signature)
+//			handleErrors("ECDSA_do_sign error");
+//		return signature;
+//	}
+//
+//	clock_t sign(int size)
+//	{
+//
+//		SignatureTestUtils::getStrings(size, rounds, messages);
+//
+//		clock_t t_start = clock();
+//		for(auto &msg : messages)
+//		{
+//			ECDSA_SIG * sig = sign(msg);
+//			ECDSA_SIG_free(sig);
+//		}
+//		return clock() - t_start;
+//	}
+//
+//	void verify(string &msg, ECDSA_SIG *signature)
+//	{
+//		unsigned char digest[MAX_DIGEST_LEN];
+//		SHA256((unsigned char *)msg.data(), msg.size(), digest);
+//
+//		if (1 != ECDSA_do_verify(digest, MAX_DIGEST_LEN, signature, eckey))
+//			handleErrors("ECDSA_do_verify");
+//	}
+//
+//	clock_t verify(int size)
+//	{
+//		SignatureTestUtils::getStrings(size, rounds, messages);
+//		vector<ECDSA_SIG *> sigs;
+//
+//		for(int i = 0;i < rounds; ++i)
+//		{
+//			auto &msg = messages[i];
+//			sigs.push_back(sign(msg));
+//		}
+//
+//		clock_t t_start = clock();
+//		for(int i = 0;i < rounds; ++i)
+//		{
+//			auto &msg = messages[i];
+//			auto &sig = sigs[i];
+//			verify(msg, sig);
+//		}
+//		return clock() - t_start;
+//	}
+//};
+//}
+
+int main( int argc , char * argv[] )
+{
+	CryptoPerfTest::EdDSA_Test eddsa(NUM_ROUNDS);
+
+	for(auto size : CryptoPerfTest::string_sizes)
+	{
+		auto t = eddsa.sign(size);
+		cout << "EdDSAsign: msg_size=" << size << " time(ms)=" << CryptoPerfTest::SignatureTestUtils::ticks2ms(t, NUM_ROUNDS) << endl;
+		t = eddsa.verify(size);
+		cout << "EdDSA verify: msg_size=" << size << " time(ms)=" << CryptoPerfTest::SignatureTestUtils::ticks2ms(t, NUM_ROUNDS) << endl;
+	}
+    cout << "done" << endl;
+    return 0 ;
+}

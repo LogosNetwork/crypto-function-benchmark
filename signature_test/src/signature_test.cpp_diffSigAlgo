@@ -1,0 +1,596 @@
+//============================================================================
+// Name        : signature_test.cpp
+// Author      : 
+// Version     :
+// Copyright   : Your copyright notice
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+//g++ -O3 -Wall signature_test.cpp -std=c++17 -I /home/peng/workspace_openssl/openssl/include/ /home/peng/workspace_openssl/openssl/libcrypto.so.1.1
+
+//
+//#include <iostream>
+//#include "/home/peng/workspace_openssl/openssl/include/openssl/evp.h"
+//#include <time.h>
+//#include <unordered_map>
+//
+//using namespace std;
+//
+////int string_sizes[] = {128, 256, 512, 1024, 1024*2, 1024*4, /*1024*8, 1024*16, 1024*32, 1024*64, 1024*128, 1024*256, 1024*512,*/ 1024*1024};
+//int string_sizes[] = {1024};
+//
+//enum HashType
+//{
+//	md5,
+//	sha1,
+//	sha224,
+//	sha256,
+//	sha384,
+//	sha512,
+//	sha512_224,
+//	sha512_256,
+//	sha3_224,
+//	sha3_256,
+//	sha3_384,
+//	sha3_512,
+//	shake128,
+//	shake256,
+//	blake2s256,
+//	blake2b512,
+//	Scrypt,
+//	Balloon,
+//	Argon2id
+//};
+//
+//
+//std::string & getString(int size)
+//{
+//	static std::unordered_map<int, std::string> strs;
+//	//not thread safe
+//	if(strs.empty())
+//	{
+//		for(auto x : string_sizes)
+//		{
+//			strs[x] = string(x, 'a');
+//		}
+//	}
+//
+//	if(strs.find(size) == strs.end())
+//	{
+//		cout << __func__ << " bad size " << size <<endl;
+//		throw runtime_error("bad string size");
+//	}
+//
+//	auto & x = strs[size];
+//	int pos = rand() % size;
+//	x[pos] = pos*7 % 256;
+//
+//	return x;
+//}
+//
+//void handleErrors(const char * s)
+//{
+//	cout << s << " error" << endl;
+//	exit(-1);
+//}
+//
+//double ticks2ms(clock_t t, int rounds)
+//{
+//	return ((double)t)/CLOCKS_PER_SEC/rounds*1000;
+//}
+//
+//#define MAX_DIGEST_LEN 		64
+//
+//void touch_openssllib()
+//{
+//	unsigned char digest[MAX_DIGEST_LEN];
+//	EVP_MD_CTX *mdctx;
+//
+//	auto & msg = getString(1024);
+//
+//	if((mdctx = EVP_MD_CTX_new()) == NULL)
+//		handleErrors("EVP_MD_CTX_create");
+//
+//	if(1 != EVP_DigestInit_ex(mdctx, EVP_md5(), NULL))
+//		handleErrors("EVP_DigestInit_ex");
+//
+//	if(1 != EVP_DigestUpdate(mdctx, msg.data(), msg.length()))
+//		handleErrors("EVP_DigestUpdate");
+//
+//	if(1 != EVP_DigestFinal_ex(mdctx, digest, NULL))
+//		handleErrors("EVP_DigestFinal_ex");
+//
+//	EVP_MD_CTX_free(mdctx);
+//}
+//
+//string openssl_hash(int msg_size, int rounds, HashType type)
+//{
+//	unsigned char digest[MAX_DIGEST_LEN];
+//	EVP_MD_CTX *mdctx;
+//
+//	auto & msg = getString(msg_size);
+//
+//	if(msg_size != (int)msg.length())
+//		handleErrors("msg_size != msg.length()");
+//
+//	if((mdctx = EVP_MD_CTX_new()) == NULL)
+//		handleErrors("EVP_MD_CTX_create");
+//
+//	for (int r = 0; r < rounds; ++r)
+//	{
+//		if(1 != EVP_MD_CTX_reset(mdctx))
+//			handleErrors("EVP_MD_CTX_reset");
+//
+//		int res;
+//		switch (type) {
+//			case md5:
+//				res = EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
+//				break;
+//			case sha1:
+//				res = EVP_DigestInit_ex(mdctx, EVP_sha1(), NULL);
+//				break;
+//			case sha224:
+//				res = EVP_DigestInit_ex(mdctx, EVP_sha224(), NULL);
+//				break;
+//			case sha256:
+//				res = EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL);
+//				break;
+//			case sha384:
+//				res = EVP_DigestInit_ex(mdctx, EVP_sha384(), NULL);
+//				break;
+//			case sha512:
+//				res = EVP_DigestInit_ex(mdctx, EVP_sha512(), NULL);
+//				break;
+//			case sha512_224:
+//				res = EVP_DigestInit_ex(mdctx, EVP_sha512_224(), NULL);
+//				break;
+//			case sha512_256:
+//				res = EVP_DigestInit_ex(mdctx, EVP_sha512_256(), NULL);
+//				break;
+//			case sha3_224:
+//				res = EVP_DigestInit_ex(mdctx, EVP_sha3_224(), NULL);
+//				break;
+//			case sha3_256:
+//				res = EVP_DigestInit_ex(mdctx, EVP_sha3_256(), NULL);
+//				break;
+//			case sha3_384:
+//				res = EVP_DigestInit_ex(mdctx, EVP_sha3_384(), NULL);
+//				break;
+//			case sha3_512:
+//				res = EVP_DigestInit_ex(mdctx, EVP_sha3_512(), NULL);
+//				break;
+//			case shake128:
+//				res = EVP_DigestInit_ex(mdctx, EVP_shake128(), NULL);
+//				break;
+//			case shake256:
+//				res = EVP_DigestInit_ex(mdctx, EVP_shake256(), NULL);
+//				break;
+//			case blake2s256:
+//				res = EVP_DigestInit_ex(mdctx, EVP_blake2s256(), NULL);
+//				break;
+//			case blake2b512:
+//				res = EVP_DigestInit_ex(mdctx, EVP_blake2b512(), NULL);
+//				break;
+//
+//			default:
+//				res = -1;
+//				break;
+//		}
+//		if(1 != res)
+//			handleErrors("EVP_DigestInit_ex");
+//
+//		if(1 != EVP_DigestUpdate(mdctx, msg.data(), msg.length()))
+//			handleErrors("EVP_DigestUpdate");
+//
+//		if(1 != EVP_DigestFinal_ex(mdctx, digest, NULL))
+//			handleErrors("EVP_DigestFinal_ex");
+//	}
+//	EVP_MD_CTX_free(mdctx);
+//
+//	string s;
+//	switch (type) {
+//		case md5:
+//			s = "md5";
+//			break;
+//		case sha1:
+//			s = "sha1";
+//			break;
+//		case sha224:
+//			s = "sha224";
+//			break;
+//		case sha256:
+//			s = "sha256";
+//			break;
+//		case sha384:
+//			s = "sha384";
+//			break;
+//		case sha512:
+//			s = "sha512";
+//			break;
+//		case sha512_224:
+//			s = "sha512_224";
+//			break;
+//		case sha512_256:
+//			s = "sha512_256";
+//			break;
+//		case sha3_224:
+//			s = "sha3_224";
+//			break;
+//		case sha3_256:
+//			s = "sha3_256";
+//			break;
+//		case sha3_384:
+//			s = "sha3_384";
+//			break;
+//		case sha3_512:
+//			s = "sha3_512";
+//			break;
+//		case shake128:
+//			s = "shake128";
+//			break;
+//		case shake256:
+//			s = "shake256";
+//			break;
+//		case blake2s256:
+//			s = "blake2s256";
+//			break;
+//		case blake2b512:
+//			s = "blake2b512";
+//			break;
+//
+//		default:
+//			s = "unknown";
+//			break;
+//	}
+//	return s;
+//}
+//
+//
+//void digest_message(int msg_size, int rounds)
+//{
+//	for(int h = HashType::md5; h <= HashType::blake2b512; ++ h )
+//	{
+//		clock_t t_start = clock();
+//		auto s = openssl_hash(msg_size, rounds, (HashType)h);
+//		cout << s << " msg_size=" << msg_size << " time(ms)=" << ticks2ms(clock() - t_start, rounds) << endl;
+//	}
+//
+//	return;
+//}
+//
+//
+//int main()
+//{
+//	int msg_size = 1024;
+//	int rounds = 10000;
+//	touch_openssllib();
+//	digest_message(msg_size, rounds);
+//	return 0;
+//}
+//
+
+/*
+#include "/home/peng/workspace_openssl/openssl/include/openssl/evp.h"
+#include "/home/peng/workspace_openssl/openssl/include/openssl/ec.h"
+#include "/home/peng/workspace_openssl/openssl/include/openssl/ecdsa.h"
+#include "/home/peng/workspace_openssl/openssl/include/openssl/obj_mac.h"
+#include <string.h>
+//#include <openssl/ec.h>      // for EC_GROUP_new_by_curve_name, EC_GROUP_free, EC_KEY_new, EC_KEY_set_group, EC_KEY_generate_key, EC_KEY_free
+//#include <openssl/ecdsa.h>   // for ECDSA_do_sign, ECDSA_do_verify
+//#include <openssl/obj_mac.h> // for NID_secp192k1
+#include <string>
+
+static int create_signature(unsigned char* hash, int hash_len)
+{
+    int function_status = -1;
+    EC_KEY *eckey=EC_KEY_new();
+    if (NULL == eckey)
+    {
+        printf("Failed to create new EC Key\n");
+        function_status = -1;
+    }
+    else
+    {
+        EC_GROUP *ecgroup= EC_GROUP_new_by_curve_name(NID_secp256k1);
+        if (NULL == ecgroup)
+        {
+            printf("Failed to create new EC Group\n");
+            function_status = -1;
+        }
+        else
+        {
+            int set_group_status = EC_KEY_set_group(eckey,ecgroup);
+            const int set_group_success = 1;
+            if (set_group_success != set_group_status)
+            {
+                printf("Failed to set group for EC Key\n");
+                function_status = -1;
+            }
+            else
+            {
+                const int gen_success = 1;
+                int gen_status = EC_KEY_generate_key(eckey);
+                if (gen_success != gen_status)
+                {
+                    printf("Failed to generate EC Key\n");
+                    function_status = -1;
+                }
+                else
+                {
+                    ECDSA_SIG *signature = ECDSA_do_sign(hash, hash_len, eckey);
+                    if (NULL == signature)
+                    {
+                        printf("Failed to generate EC Signature\n");
+                        function_status = -1;
+                    }
+                    else
+                    {
+
+                        int verify_status = ECDSA_do_verify(hash, hash_len, signature, eckey);
+                        const int verify_success = 1;
+                        if (verify_success != verify_status)
+                        {
+                            printf("Failed to verify EC Signature\n");
+                            function_status = -1;
+                        }
+                        else
+                        {
+                            printf("Verifed EC Signature\n");
+                            function_status = 1;
+                        }
+                    }
+                }
+            }
+            EC_GROUP_free(ecgroup);
+        }
+        EC_KEY_free(eckey);
+    }
+
+    return function_status;
+}
+
+int main( int argc , char * argv[] )
+{
+    unsigned char hash[] = "c7fbca202a95a570285e3d700eb04ca2";
+    int hs = std::string("c7fbca202a95a570285e3d700eb04ca2").size();
+    int status = create_signature(hash, hs);
+    return(status) ;
+}
+*/
+
+
+//g++ -O3 -Wall signature_test.cpp -std=c++17 -I /home/peng/workspace_openssl/openssl/include/
+//home/peng/workspace_openssl/openssl/libcrypto.so.1.1 -m64 ../../ed25519-donna/ed25519.o
+
+/*
+#include <openssl/rand.h>
+#include "/home/peng/workspace_openssl/ed25519-donna/ed25519.h"
+#include <string>
+#include <iostream>
+using namespace std;
+
+void handleErrors(const char * s)
+{
+	cout << s << " error" << endl;
+	exit(-1);
+}
+
+int main()
+{
+    unsigned char hash[] = "c7fbca202a95a570285e3d700eb04ca2";
+    int hs = std::string("c7fbca202a95a570285e3d700eb04ca2").size();
+
+    ed25519_secret_key sk;
+    if(1 != RAND_bytes(sk, sizeof(ed25519_secret_key)))
+    	handleErrors("RAND_bytes");
+
+    ed25519_public_key pk;
+    ed25519_publickey(sk, pk);
+
+    ed25519_signature sig;
+    ed25519_sign(hash, hs, sk, pk, sig);
+
+    int valid = ed25519_sign_open(hash, hs, pk, sig) == 0;
+
+    if (! valid )
+    	handleErrors("ed25519_sign_open");
+    else
+    	cout << "good sig" << endl;
+    return 0 ;
+}
+
+*/
+
+/*
+#include <iostream>
+#include "/home/peng/workspace_openssl/signature_test/src/libCrypto/Schnorr.h"
+using namespace std;
+
+void handleErrors(const char * s)
+{
+	cout << s << " error" << endl;
+	exit(-1);
+}
+
+int main( int argc , char * argv[] )
+{
+    vector<unsigned char> message;
+    message.push_back('a');
+
+    Schnorr schnorr;// = Schnorr::GetInstance();
+    //auto keyPair = schnorr.GenKeyPair();
+    PrivKey privkey;
+    PubKey pubkey(privkey);
+
+    Signature sig;
+    if(!schnorr.Sign(message, privkey, pubkey, sig))
+    	handleErrors("schnorr.Sign");
+
+    if(!schnorr.Verify(message, sig, pubkey))
+    	handleErrors("schnorr.Verify");
+
+    cout << "good sig" << endl;
+    return 0 ;
+}
+*/
+
+
+#include <iostream>
+#include "/home/peng/workspace_openssl/signature_test/src/libCrypto/MultiSig.h"
+using namespace std;
+
+#define NUM_NODES 		32
+
+void handleErrors(const char * s)
+{
+	cout << s << " error" << endl;
+	exit(-1);
+}
+
+int num_nodes;
+//vector<Schnorr> schnorrs;
+vector<PrivKey> skeys;
+vector<PubKey> pkeys;
+
+vector<CommitSecret> commitSecrets;
+vector<CommitPoint> commitPoints;
+vector<Response> responses;
+
+void init(int nodes)
+{
+	num_nodes = nodes;
+	skeys.resize(num_nodes);
+//	pkeys.resize(num_nodes);
+	for(int i=0; i<num_nodes;++i)
+	{
+//		auto sch = new Schnorr();
+//		schnorrs.push_back(sch);
+//		PrivKey();
+//		skeys.push_back(sk);
+//		auto pk = new PubKey(*sk);
+//		cout << "init " << i << endl;
+		if(!skeys[i].Initialized())
+			handleErrors("!skeys[i].Initialized()");
+
+		pkeys.push_back(PubKey(skeys[i]));
+
+		if(!pkeys[i].Initialized())
+			handleErrors("!pkeys[i].Initialized()");
+	}
+}
+
+void sign(vector<unsigned char> &message, vector<Signature> & sigs)
+{
+	sigs.resize(num_nodes);
+	for(int i=0; i<num_nodes;++i)
+	{
+		Signature &sig = sigs[i];
+		PrivKey &sk = skeys[i];
+		PubKey &pk = pkeys[i];
+		//cout << "sig " << i << endl;
+		if(!Schnorr::GetInstance().Sign(message, sk, pk, sig))
+		   	handleErrors("schnorr.Sign");
+		//cout << "good sig " << i << endl;
+	}
+}
+
+void verify(vector<unsigned char> &message, vector<Signature> & sigs)
+{
+	for(int i=0; i<num_nodes;++i)
+	{
+		Signature &sig = sigs[i];
+//		Schnorr & schnorr = schnorrs[i];
+		PubKey &pk = pkeys[i];
+		if(!Schnorr::GetInstance().Verify(message, sig, pk))
+			handleErrors("schnorr.Verify");
+		//cout << "good sig" << endl;
+	}
+}
+
+std::shared_ptr<PubKey>
+AggregatePubKeys(const std::vector<PubKey>& pubkeys)
+{
+	return MultiSig::AggregatePubKeys(pkeys);
+}
+
+void genCommitPoints()
+{
+	commitSecrets.resize(num_nodes);
+	for(int i=0; i<num_nodes;++i)
+	{
+		if(!commitSecrets[i].Initialized())
+			handleErrors("!commitSecrets[i].Initialized");
+		//cout << "good " << endl;
+		commitPoints.push_back(CommitPoint(commitSecrets[i]));
+
+		if(!commitPoints[i].Initialized())
+			handleErrors("!commitPoints[i].Initialized");
+		//cout << "good " << endl;
+	}
+}
+
+std::shared_ptr<CommitPoint>
+AggregateCommits(const std::vector<CommitPoint>& commitPoints)
+{
+	return MultiSig::AggregateCommits(commitPoints);
+}
+
+void genResponse(Challenge & c)
+{
+	for(int i=0; i<num_nodes;++i)
+	{
+		responses.push_back(Response(commitSecrets[i], c, skeys[i]));
+		if(!responses[i].Initialized())
+			handleErrors("!responses[i].Initialized()");
+		//cout << "good " << endl;
+	}
+}
+
+void VerifyResponse(const Challenge& challenge)
+{
+	for(int i=0; i<num_nodes;++i)
+	{
+		if(!MultiSig::VerifyResponse(responses[i], challenge, pkeys[i], commitPoints[i]))
+			handleErrors("!VerifyResponse");
+		//cout << "good " << endl;
+	}
+}
+
+std::shared_ptr<Response>
+AggregateResponses(const std::vector<Response>& responses)
+{
+	return MultiSig::AggregateResponses(responses);
+}
+
+std::shared_ptr<Signature>
+AggregateSign(const Challenge& challenge, const Response& aggregatedResponse)
+{
+	return MultiSig::AggregateSign(challenge, aggregatedResponse);
+}
+
+int main( int argc , char * argv[] )
+{
+    vector<unsigned char> message;
+    message.push_back('a');
+    vector<Signature> sigs;
+    init(NUM_NODES);
+
+	sign(message, sigs);
+	verify(message, sigs);
+
+    auto apk = AggregatePubKeys(pkeys);
+    genCommitPoints();
+    auto acp = AggregateCommits(commitPoints);
+    Challenge challenge(*acp, *apk, message);
+    genResponse(challenge);
+    VerifyResponse(challenge);
+    auto ars = AggregateResponses(responses);
+    auto asig = AggregateSign(challenge, *ars);
+
+    if(!Schnorr::GetInstance().Verify(message, *asig, *apk))
+    	handleErrors("schnorr.Verify");
+
+    cout << "done" << endl;
+    return 0 ;
+}
+
